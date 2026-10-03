@@ -1,0 +1,51 @@
+# Backend .dockerignore — keep the build context tiny.
+# This file lives in backend/, so relative paths are local to backend/.
+
+# Virtualenvs (huge, host-specific binaries)
+.venv/
+venv/
+env/
+__pypackages__/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Tests / tooling artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.egg-info/
+build/
+dist/
+
+# Local FAISS indices — rebuilt at runtime by /ingest.
+.faiss_index/
+
+# Env files (secrets must never be baked into images)
+.env
+.env.*
+!.env.example
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# VCS
+.git/
+.gitignore
+
+# Logs / temp
+*.log
+backend.log
+uploads/
+
+# HuggingFace cache from local development (image builds its own into /app/.cache)
+.cache/

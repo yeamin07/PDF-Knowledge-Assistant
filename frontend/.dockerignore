@@ -1,0 +1,37 @@
+# Frontend .dockerignore — keep the build context tiny.
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Env files (secrets must never be baked into images)
+.env
+.env.*
+!.env.example
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# VCS
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Streamlit runtime data (regenerated on container start)
+.streamlit/
+
+# Agent / IDE symlinks not relevant to runtime
+.agents/
+.claude/

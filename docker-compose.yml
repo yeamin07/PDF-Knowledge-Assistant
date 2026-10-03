@@ -1,0 +1,77 @@
+# =============================================================================
+# Local development & testing — Docker Compose
+# =============================================================================
+# Usage:
+#   cp .env.example .env       # fill in CHAT_API_KEY
+#   docker compose up --build  # build & start both services
+#
+# Then open:
+#   Streamlit UI  -> http://localhost:8501
+#   FastAPI docs  -> http://localhost:8000/docs
+# =============================================================================
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rag-backend
+    image: rag-pdf-qa/backend:local
+    restart: unless-stopped
+    environment:
+      CHAT_API_KEY: ${CHAT_API_KEY:?CHAT_API_KEY must be set in .env}
+      LLM_MODEL: ${LLM_MODEL:-openai/gpt-oss-20b}
+      FAISS_INDEX_DIR: /app/.faiss_index
+      COLLECTION: ${COLLECTION:-pdf_docs}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      # Named volume keeps the FAISS index across `docker compose down` /
+      # container restarts. On EC2 we'll mount a host path here instead.
+      - faiss_data:/app/.faiss_index
+    expose:
+      - "8000"
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s   # model load + HF cache can take time
+    networks:
+      - rag-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rag-frontend
+    image: rag-pdf-qa/frontend:local
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      # CRITICAL: use the service name "backend", NOT localhost.
+      BACKEND_URL: http://backend:8000
+      COLLECTION: ${COLLECTION:-pdf_docs}
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "${FRONTEND_PORT:-8501}:8501"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - rag-net
+
+networks:
+  rag-net:
+    name: rag-net
+    driver: bridge
+
+volumes:
+  faiss_data:
+    name: rag_faiss_data

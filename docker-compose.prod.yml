@@ -1,0 +1,74 @@
+# =============================================================================
+# Production docker-compose — pulls prebuilt images from Docker Hub.
+# Drop this on the EC2 host alongside an `.env` file with real secrets.
+#
+# Usage on EC2:
+#   docker compose -f docker-compose.prod.yml --env-file .env pull
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+#
+# To update after pushing a new image:
+#   docker compose -f docker-compose.prod.yml --env-file .env pull
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+# =============================================================================
+
+services:
+  backend:
+    image: ${DOCKERHUB_USER}/rag-pdf-qa-backend:${TAG:-latest}
+    container_name: rag-backend
+    restart: unless-stopped
+    environment:
+      CHAT_API_KEY: ${CHAT_API_KEY:?CHAT_API_KEY must be set}
+      LLM_MODEL: ${LLM_MODEL:-openai/gpt-oss-20b}
+      FAISS_INDEX_DIR: /app/.faiss_index
+      COLLECTION: ${COLLECTION:-pdf_docs}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      # Persist FAISS index to a host directory so it survives container
+      # replacement. Create /opt/rag-pdf-qa/faiss on the EC2 host first.
+      - /opt/rag-pdf-qa/faiss:/app/.faiss_index
+    expose:
+      - "8000"
+    # Bind only to localhost on EC2; an ALB / Nginx / SSH tunnel fronts the
+    # frontend. Remove the `ports` line entirely if you only want intra-stack
+    # access and you front both services with a load balancer.
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks:
+      - rag-net
+
+  frontend:
+    image: ${DOCKERHUB_USER}/rag-pdf-qa-frontend:${TAG:-latest}
+    container_name: rag-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:8000
+      COLLECTION: ${COLLECTION:-pdf_docs}
+      PYTHONUNBUFFERED: "1"
+    ports:
+      # Expose publicly so you can hit http://EC2_PUBLIC_IP:8501.
+      # For production you'll want a TLS-terminating proxy, but the brief
+      # said no Nginx — leaving this as a host-published port is the simplest
+      # path that meets the requirements.
+      - "8501:8501"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - rag-net
+
+networks:
+  rag-net:
+    name: rag-net
+    driver: bridge

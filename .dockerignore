@@ -1,0 +1,38 @@
+# Root .dockerignore — used when building images from the repo root.
+
+# Virtualenvs anywhere
+**/.venv/
+**/venv/
+**/env/
+
+# Python bytecode
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+
+# FAISS indices anywhere
+**/.faiss_index/
+
+# Env files (secrets must never be baked into images)
+.env
+.env.*
+!.env.example
+
+# VCS
+.git/
+
+# IDE / editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs / uploads
+*.log
+uploads/
+backend.log
+
+# HuggingFace caches
+**/.cache/
+**/.huggingface/

@@ -1,0 +1,28 @@
+fastapi>=0.115
+uvicorn[standard]>=0.34
+python-multipart>=0.0.20
+pydantic>=2.10
+
+# LangChain + integrations
+langchain>=0.3
+langchain-core>=0.3
+langchain-community>=0.3
+langchain-groq>=1.1
+langchain-text-splitters>=0.3
+
+# In-memory vector store (FAISS)
+faiss-cpu>=1.12
+
+# PDF loader
+pypdf>=5.1
+
+# Pin torch to the CPU-only build so we don't pull ~2 GB of CUDA libraries
+# (nvidia-cusolver, nvidia-cudnn, etc.) that sentence-transformers would otherwise
+# drag in. Listed first so its spec wins the resolver.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.3
+--extra-index-url https://pypi.org/simple
+
+# Local sentence-transformers for embeddings (CPU, ~150 MB total)
+sentence-transformers>=3.0
+langchain-huggingface>=0.1
