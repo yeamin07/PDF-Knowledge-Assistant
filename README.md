@@ -1,14 +1,3 @@
----
-title: RAG PDF QA
-emoji: 📄
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
-license: mit
----
-
 # RAG PDF QA
 
 Upload a PDF, ask natural-language questions, get answers grounded in the PDF.
@@ -129,9 +118,3 @@ Response:
      - Instance type: Free or Starter (no model loaded here)
      - Env vars: `BACKEND_URL` = the public URL of your backend service (e.g. `https://rag-backend-xxxx.onrender.com`)
 4. Open the frontend's public URL.
-
-> **Cold start on free tier**: Render's free tier spins down the container
-> after 15 min of no traffic. The FAISS index lives in the container's
-> filesystem, so a cold start wipes it. **You'll need to re-ingest your PDF
-> after every cold start** (usually ~30-60s after the first idle). To make
-> the index persistent, attach a Render Disk (paid plan feature).
